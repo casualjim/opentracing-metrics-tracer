@@ -79,7 +79,7 @@ describe('reporter/PrometheusReporter', () => {
 
       // assert
       expect(metricsOperationDurationSeconds.labels).to.have.callCount(1)
-      expect(metricsOperationDurationSeconds.labels).to.be.calledWith(PrometheusReporter.LABEL_PARENT_SERVICE_UNKNOWN)
+      expect(metricsOperationDurationSeconds.labels).to.be.calledWith('my-operation')
 
       expect(metricsStub.observe).to.have.callCount(1)
       expect(metricsStub.observe).to.be.calledWith(0.1)
@@ -115,7 +115,7 @@ describe('reporter/PrometheusReporter', () => {
 
       // assert
       expect(metricsOperationDurationSeconds.labels).to.have.callCount(2)
-      expect(metricsOperationDurationSeconds.labels).to.be.calledWith('parent-service')
+      expect(metricsOperationDurationSeconds.labels).to.be.calledWith('my-operation')
 
       expect(metricsStub.observe).to.have.callCount(2)
       expect(metricsStub.observe).to.be.calledWith(0.1)
@@ -125,13 +125,13 @@ describe('reporter/PrometheusReporter', () => {
     it('should observe HTTP request metrics without parent', function () {
       // init
       const prometheusReporter = new PrometheusReporter()
-      const httpRequestDurationSeconds = prometheusReporter._metricshttpRequestDurationSeconds()
+      const httpRequestLatency = prometheusReporter._metricsHttpRequestLatency()
 
       const metricsStub = {
         observe: this.sandbox.spy()
       }
 
-      this.sandbox.stub(httpRequestDurationSeconds, 'labels').callsFake(() => metricsStub)
+      this.sandbox.stub(httpRequestLatency, 'labels').callsFake(() => metricsStub)
 
       // generate data
       const tracer = new Tracer('service')
@@ -139,6 +139,7 @@ describe('reporter/PrometheusReporter', () => {
       const span = tracer.startSpan('http_request')
       span.setTag(Tags.HTTP_METHOD, 'GET')
       span.setTag(Tags.HTTP_STATUS_CODE, 200)
+      span.setTag(Tags.HTTP_URL, 'http://localhost:9392/')
       span.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_SERVER)
       clock.tick(100)
       span.finish()
@@ -146,9 +147,9 @@ describe('reporter/PrometheusReporter', () => {
       prometheusReporter.reportFinish(span)
 
       // assert
-      expect(httpRequestDurationSeconds.labels).to.have.callCount(1)
-      expect(httpRequestDurationSeconds.labels)
-        .to.be.calledWith(PrometheusReporter.LABEL_PARENT_SERVICE_UNKNOWN, 'GET', 200)
+      expect(httpRequestLatency.labels).to.have.callCount(1)
+      expect(httpRequestLatency.labels)
+        .to.be.calledWith('HTTP-GET-/', 'false')
 
       expect(metricsStub.observe).to.have.callCount(1)
       expect(metricsStub.observe).to.be.calledWith(0.1)
@@ -157,13 +158,13 @@ describe('reporter/PrometheusReporter', () => {
     it('should observe HTTP request metrics with parent', function () {
       // init
       const prometheusReporter = new PrometheusReporter()
-      const httpRequestDurationSeconds = prometheusReporter._metricshttpRequestDurationSeconds()
+      const httpRequestLatency = prometheusReporter._metricsHttpRequestLatency()
 
       const metricsStub = {
         observe: this.sandbox.spy()
       }
 
-      this.sandbox.stub(httpRequestDurationSeconds, 'labels').callsFake(() => metricsStub)
+      this.sandbox.stub(httpRequestLatency, 'labels').callsFake(() => metricsStub)
 
       // generate data
       const parentTracer = new Tracer('parent-service')
@@ -174,6 +175,7 @@ describe('reporter/PrometheusReporter', () => {
       span1.setTag(Tags.HTTP_METHOD, 'GET')
       span1.setTag(Tags.HTTP_STATUS_CODE, 200)
       span1.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_SERVER)
+      span1.setTag(Tags.HTTP_URL, 'http://localhost:9392/')
       clock.tick(100)
       span1.finish()
 
@@ -182,6 +184,7 @@ describe('reporter/PrometheusReporter', () => {
       span2.setTag(Tags.HTTP_METHOD, 'POST')
       span2.setTag(Tags.HTTP_STATUS_CODE, 201)
       span2.setTag(Tags.SPAN_KIND, Tags.SPAN_KIND_RPC_SERVER)
+      span2.setTag(Tags.HTTP_URL, 'http://localhost:9392/pets')
       clock.tick(300)
       span2.finish()
 
@@ -189,8 +192,8 @@ describe('reporter/PrometheusReporter', () => {
       prometheusReporter.reportFinish(span2)
 
       // assert
-      expect(httpRequestDurationSeconds.labels).to.have.callCount(2)
-      expect(httpRequestDurationSeconds.labels).to.be.calledWith('parent-service', 'POST', 201)
+      expect(httpRequestLatency.labels).to.have.callCount(2)
+      expect(httpRequestLatency.labels).to.be.calledWith('HTTP-POST-/pets', 'false')
 
       expect(metricsStub.observe).to.have.callCount(2)
       expect(metricsStub.observe).to.be.calledWith(0.1)
@@ -200,13 +203,13 @@ describe('reporter/PrometheusReporter', () => {
     it('should skip client HTTP requests', function () {
       // init
       const prometheusReporter = new PrometheusReporter()
-      const httpRequestDurationSeconds = prometheusReporter._metricshttpRequestDurationSeconds()
+      const httpRequestLatency = prometheusReporter._metricsHttpRequestLatency()
 
       const metricsStub = {
         observe: this.sandbox.spy()
       }
 
-      this.sandbox.stub(httpRequestDurationSeconds, 'labels').callsFake(() => metricsStub)
+      this.sandbox.stub(httpRequestLatency, 'labels').callsFake(() => metricsStub)
 
       // generate data
       const tracer = new Tracer('service')
@@ -221,7 +224,7 @@ describe('reporter/PrometheusReporter', () => {
       prometheusReporter.reportFinish(span)
 
       // assert
-      expect(httpRequestDurationSeconds.labels).to.have.callCount(0)
+      expect(httpRequestLatency.labels).to.have.callCount(0)
       expect(metricsStub.observe).to.have.callCount(0)
     })
   })
@@ -231,8 +234,8 @@ describe('reporter/PrometheusReporter', () => {
       const reporter = new PrometheusReporter()
 
       expect(reporter.metrics()).to.be.equal(dedent`
-        # HELP operation_duration_seconds Duration of operations in second
-        # TYPE operation_duration_seconds histogram\n
+        # HELP operations Duration of operations in second
+        # TYPE operations histogram\n
       `)
     })
   })

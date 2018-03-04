@@ -23,8 +23,8 @@ describe('e2e: PrometheusReporter', () => {
       const reporter = new PrometheusReporter()
 
       expect(reporter.metrics()).to.be.equal(dedent`
-        # HELP operation_duration_seconds Duration of operations in second
-        # TYPE operation_duration_seconds histogram\n
+        # HELP operations Duration of operations in second
+        # TYPE operations histogram\n
       `)
     })
 
@@ -40,25 +40,25 @@ describe('e2e: PrometheusReporter', () => {
       clock.tick(300)
       span2.finish()
 
-      const labelStr = `parent_service="${PrometheusReporter.LABEL_PARENT_SERVICE_UNKNOWN}",name="my-operation"`
+      const labelStr = 'name="my-operation"'
 
       expect(reporter.metrics()).to.be.equal(dedent`
-        # HELP operation_duration_seconds Duration of operations in second
-        # TYPE operation_duration_seconds histogram
-        operation_duration_seconds_bucket{le="0.005",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.01",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.025",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.05",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.1",${labelStr}} 1
-        operation_duration_seconds_bucket{le="0.25",${labelStr}} 1
-        operation_duration_seconds_bucket{le="0.5",${labelStr}} 2
-        operation_duration_seconds_bucket{le="1",${labelStr}} 2
-        operation_duration_seconds_bucket{le="2.5",${labelStr}} 2
-        operation_duration_seconds_bucket{le="5",${labelStr}} 2
-        operation_duration_seconds_bucket{le="10",${labelStr}} 2
-        operation_duration_seconds_bucket{le="+Inf",${labelStr}} 2
-        operation_duration_seconds_sum{${labelStr}} 0.4
-        operation_duration_seconds_count{${labelStr}} 2\n
+        # HELP operations Duration of operations in second
+        # TYPE operations histogram
+        operations_bucket{le="0.005",${labelStr}} 0
+        operations_bucket{le="0.01",${labelStr}} 0
+        operations_bucket{le="0.025",${labelStr}} 0
+        operations_bucket{le="0.05",${labelStr}} 0
+        operations_bucket{le="0.1",${labelStr}} 1
+        operations_bucket{le="0.25",${labelStr}} 1
+        operations_bucket{le="0.5",${labelStr}} 2
+        operations_bucket{le="1",${labelStr}} 2
+        operations_bucket{le="2.5",${labelStr}} 2
+        operations_bucket{le="5",${labelStr}} 2
+        operations_bucket{le="10",${labelStr}} 2
+        operations_bucket{le="+Inf",${labelStr}} 2
+        operations_sum{${labelStr}} 0.4
+        operations_count{${labelStr}} 2\n
       `)
     })
 
@@ -77,25 +77,25 @@ describe('e2e: PrometheusReporter', () => {
       clock.tick(300)
       span2.finish()
 
-      const labelStr = 'parent_service="parent-service",name="my-operation"'
+      const labelStr = 'name="my-operation"'
 
       expect(reporter.metrics()).to.be.equal(dedent`
-        # HELP operation_duration_seconds Duration of operations in second
-        # TYPE operation_duration_seconds histogram
-        operation_duration_seconds_bucket{le="0.005",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.01",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.025",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.05",${labelStr}} 0
-        operation_duration_seconds_bucket{le="0.1",${labelStr}} 1
-        operation_duration_seconds_bucket{le="0.25",${labelStr}} 1
-        operation_duration_seconds_bucket{le="0.5",${labelStr}} 2
-        operation_duration_seconds_bucket{le="1",${labelStr}} 2
-        operation_duration_seconds_bucket{le="2.5",${labelStr}} 2
-        operation_duration_seconds_bucket{le="5",${labelStr}} 2
-        operation_duration_seconds_bucket{le="10",${labelStr}} 2
-        operation_duration_seconds_bucket{le="+Inf",${labelStr}} 2
-        operation_duration_seconds_sum{${labelStr}} 0.4
-        operation_duration_seconds_count{${labelStr}} 2\n
+        # HELP operations Duration of operations in second
+        # TYPE operations histogram
+        operations_bucket{le="0.005",${labelStr}} 0
+        operations_bucket{le="0.01",${labelStr}} 0
+        operations_bucket{le="0.025",${labelStr}} 0
+        operations_bucket{le="0.05",${labelStr}} 0
+        operations_bucket{le="0.1",${labelStr}} 1
+        operations_bucket{le="0.25",${labelStr}} 1
+        operations_bucket{le="0.5",${labelStr}} 2
+        operations_bucket{le="1",${labelStr}} 2
+        operations_bucket{le="2.5",${labelStr}} 2
+        operations_bucket{le="5",${labelStr}} 2
+        operations_bucket{le="10",${labelStr}} 2
+        operations_bucket{le="+Inf",${labelStr}} 2
+        operations_sum{${labelStr}} 0.4
+        operations_count{${labelStr}} 2\n
       `)
     })
   })
@@ -126,43 +126,37 @@ describe('e2e: PrometheusReporter', () => {
       clock.tick(300)
       span2.finish()
 
-      const labelStr1 = `parent_service="${PrometheusReporter.LABEL_PARENT_SERVICE_UNKNOWN}",name="http_request"`
-      const labelStr2 = `parent_service="${PrometheusReporter.LABEL_PARENT_SERVICE_UNKNOWN}",method="GET",code="200"`
+      const labelStr2 = `endpoint="HTTP-GET-/foo",error="false"`
 
       expect(reporter.metrics()).to.be.equal(dedent`
-        # HELP operation_duration_seconds Duration of operations in second
-        # TYPE operation_duration_seconds histogram
-        operation_duration_seconds_bucket{le="0.005",${labelStr1}} 0
-        operation_duration_seconds_bucket{le="0.01",${labelStr1}} 0
-        operation_duration_seconds_bucket{le="0.025",${labelStr1}} 0
-        operation_duration_seconds_bucket{le="0.05",${labelStr1}} 0
-        operation_duration_seconds_bucket{le="0.1",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="0.25",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="0.5",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="1",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="2.5",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="5",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="10",${labelStr1}} 1
-        operation_duration_seconds_bucket{le="+Inf",${labelStr1}} 1
-        operation_duration_seconds_sum{${labelStr1}} 0.1
-        operation_duration_seconds_count{${labelStr1}} 1
+        # HELP operations Duration of operations in second
+        # TYPE operations histogram
 
-        # HELP http_request_handler_duration_seconds Duration of HTTP requests in second
-        # TYPE http_request_handler_duration_seconds histogram
-        http_request_handler_duration_seconds_bucket{le="0.005",${labelStr2}} 0
-        http_request_handler_duration_seconds_bucket{le="0.01",${labelStr2}} 0
-        http_request_handler_duration_seconds_bucket{le="0.025",${labelStr2}} 0
-        http_request_handler_duration_seconds_bucket{le="0.05",${labelStr2}} 0
-        http_request_handler_duration_seconds_bucket{le="0.1",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="0.25",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="0.5",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="1",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="2.5",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="5",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="10",${labelStr2}} 1
-        http_request_handler_duration_seconds_bucket{le="+Inf",${labelStr2}} 1
-        http_request_handler_duration_seconds_sum{${labelStr2}} 0.1
-        http_request_handler_duration_seconds_count{${labelStr2}} 1\n
+        # HELP requests Counts the number of requests made distinguished by their endpoint and error status
+        # TYPE requests counter
+        requests{endpoint="HTTP-GET-/foo",error="false"} 1
+
+        # HELP request_latency Duration of HTTP requests in second distinguished by their endpoint and error status
+        # TYPE request_latency histogram
+        request_latency_bucket{le="0.005",${labelStr2}} 0
+        request_latency_bucket{le="0.01",${labelStr2}} 0
+        request_latency_bucket{le="0.025",${labelStr2}} 0
+        request_latency_bucket{le="0.05",${labelStr2}} 0
+        request_latency_bucket{le="0.1",${labelStr2}} 1
+        request_latency_bucket{le="0.25",${labelStr2}} 1
+        request_latency_bucket{le="0.5",${labelStr2}} 1
+        request_latency_bucket{le="1",${labelStr2}} 1
+        request_latency_bucket{le="2.5",${labelStr2}} 1
+        request_latency_bucket{le="5",${labelStr2}} 1
+        request_latency_bucket{le="10",${labelStr2}} 1
+        request_latency_bucket{le="+Inf",${labelStr2}} 1
+        request_latency_sum{${labelStr2}} 0.1
+        request_latency_count{${labelStr2}} 1
+
+        # HELP http_requests Counts the responses distinguished by endpoint and status code bucket
+        # TYPE http_requests counter
+        http_requests{endpoint="HTTP-GET-/foo",status_code="2xx"} 1\n
+
       `)
     })
   })

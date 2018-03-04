@@ -23,16 +23,31 @@
     "prom-client": "10.1.1",
     "uuid": "3.1.0"
   },
+  "standard": {
+    "globals": [
+      "describe",
+      "context",
+      "before",
+      "beforeEach",
+      "after",
+      "afterEach",
+      "it",
+      "expect"
+    ]
+  },
   "devDependencies": {
     "chai": "4.1.2",
     "dedent": "0.7.0",
-    "eslint": "4.7.2",
-    "eslint-config-airbnb-base": "11.0.0",
-    "eslint-plugin-import": "2.7.0",
-    "eslint-plugin-promise": "3.5.0",
+    "eslint": "4.18.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "2.8.0",
+    "eslint-plugin-promise": "3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
     "mocha": "3.5.3",
+    "mocha-standard": "^1.0.0",
     "nyc": "11.2.1",
     "sinon": "3.2.1",
-    "sinon-chai": "2.14.0"
+    "sinon-chai": "2.14.0",
+    "standard": "^11.0.0"
   }
 }
