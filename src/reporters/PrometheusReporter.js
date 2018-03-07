@@ -182,6 +182,7 @@ class PrometheusReporter {
     assert(span instanceof Span, 'span is required')
     const endpoint = PrometheusReporter.endpointName(span)
     const err = PrometheusReporter.errorValue(span)
+    span.setOperationName(endpoint)
 
     this._recordHttpRequestMetrics(endpoint, err, span.duration() / 1000)
     this._recordHttpResponseMetrics(endpoint, parseInt(span.getTag(Tags.HTTP_STATUS_CODE), 10))
